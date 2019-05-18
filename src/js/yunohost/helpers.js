@@ -33,6 +33,8 @@
                 level = 'log';
             }
 
+            message = message.split("\n").join("<br />");
+
             // Add message
             $('#flashMessage .messages')
                 .prepend('<div class="alert alert-'+ level +'">'+
@@ -65,14 +67,19 @@
         api: function(uri, callback, method, data, websocket, callbackOnFailure) {
             c = this;
 
+            method = typeof method !== 'undefined' ? method : 'GET';
+            data   = typeof data   !== 'undefined' ? data   : {};
+            if (window.navigator && window.navigator.language && (typeof data.locale === 'undefined')) {
+                data.locale = y18n.locale || window.navigator.language.substr(0, 2);
+            }
+            app.loaded = false;
+            if ($('div.loader').length === 0) {
+                $('#main').append('<div class="loader loader-content"></div>');
+            }
             call = function(uri, callback, method, data, callbackOnFailure) {
-                method = typeof method !== 'undefined' ? method : 'GET';
-                data   = typeof data   !== 'undefined' ? data   : {};
-                if (window.navigator && window.navigator.language && (typeof data.locale === 'undefined')) {
-                    data.locale = y18n.locale || window.navigator.language.substr(0, 2);
-                }
 
                 var args = data;
+                // TODO: change this code
                 if (uri === '/postinstall') {
                     var installing = false;
                     setInterval(function () {
@@ -80,10 +87,6 @@
                     }, 1500);
                 }
 
-                app.loaded = false;
-                if ($('div.loader').length === 0) {
-                    $('#main').append('<div class="loader loader-content"></div>');
-                }
                 if (typeof callbackOnFailure !== 'function') {
                     callbackOnFailure = function(xhr) {
                         // Postinstall is a custom case, we have to wait that
@@ -121,9 +124,18 @@
                             }
                             // 500
                             else if (xhr.status == 500) {
-                                error_log = JSON.parse(xhr.responseText);
-                                error_log.route = error_log.route.join(' ') + '\n';
-                                error_log.arguments = JSON.stringify(error_log.arguments);
+                                try {
+                                    error_log = JSON.parse(xhr.responseText);
+                                    error_log.route = error_log.route.join(' ') + '\n';
+                                    error_log.arguments = JSON.stringify(error_log.arguments);
+                                }
+                                catch (e)
+                                {
+                                    error_log = {};
+                                    error_log.route = "Failed to parse route";
+                                    error_log.arguments = "Failed to parse arguments";
+                                    error_log.traceback = xhr.responseText;
+                                }
                                 c.flash('fail', y18n.t('internal_exception', [error_log.route, error_log.arguments, error_log.traceback]));
                             }
                             // 502 Bad gateway means API is down
@@ -133,6 +145,12 @@
                             // More verbose error messages first
                             else if (typeof xhr.responseText !== 'undefined') {
                                 c.flash('fail', xhr.responseText);
+                            }
+                            // 0 mean "the connexion has been closed" apparently
+                            else if (xhr.status == 0) {
+                                var errorMessage = xhr.status+' '+xhr.statusText;
+                                c.flash('fail', y18n.t('error_connection_interrupted', [errorMessage]));
+                                console.log(xhr);
                             }
                             // Return HTTP error code at least
                             else {
@@ -170,9 +188,12 @@
 
             websocket = typeof websocket !== 'undefined' ? websocket : true;
             if (websocket) {
-
                 // Open a WebSocket connection to retrieve live messages from the moulinette
                 var ws = new WebSocket('wss://'+ store.get('url') +'/messages');
+                // Flag to avoid to call twice the API
+                // We need to set that in ws object as we need to use it in ws.onopen
+                // and several ws object could be running at the same time...
+                ws.api_called = false;
                 ws.onmessage = function(evt) {
                     // console.log(evt.data);
                     $.each($.parseJSON(evt.data), function(k, v) {
@@ -181,11 +202,18 @@
                 };
 
                 // If not connected, WebSocket connection will raise an error, but we do not want to interrupt API request
-                ws.onerror = ws.onopen;
+                ws.onerror = function () {
+                    ws.onopen();
+                };
 
-                ws.onclose = function() {};
+                ws.onclose = function() { };
 
-                ws.onopen = call(uri, callback, method, data, callbackOnFailure);
+                ws.onopen = function () {
+                    if (!ws.api_called) {
+                        ws.api_called = true;
+                        call(uri, callback, method, data, callbackOnFailure);
+                    }
+                };
             } else {
                 call(uri, callback, method, data, callbackOnFailure);
             }
@@ -302,6 +330,19 @@
             return box.modal('show');
         },
 
+        selectAllOrNone: function () {
+          // Remove active style from buttons
+          $(".select_all-none input").click(function(){ $(this).toggleClass("active"); });
+          // Select all checkbox in this panel
+          $(".select_all").click(function(){
+            $(this).parents(".panel").children(".list-group").find("input").prop("checked", true);
+          });
+          // Deselect all checkbox in this panel
+          $(".select_none").click(function(){
+            $(this).parents(".panel").children(".list-group").find("input").prop("checked", false);
+          });
+        },
+
         arraySortById: function(arr) {
             arr.sort(function(a, b){
                 if (a.id > b.id) {
@@ -322,7 +363,7 @@
             });
         },
 
-        groupHooks: function(hooks) {
+        groupHooks: function(hooks, raw_infos){
             var data = {};
             var rules = [
                 {
@@ -335,6 +376,7 @@
 
             $.each(hooks, function(i, hook) {
                 var group_id=hook;
+                var hook_size=(raw_infos && raw_infos[hook] && raw_infos[hook].size)?raw_infos[hook].size:0;
                 $.each(rules, function(i, rule) {
                     if (rule.isIn(hook)) {
                         group_id = 'adminjs_group_'+rule.id;
@@ -346,25 +388,27 @@
                     data[group_id] = {
                         name:y18n.t('hook_'+group_id),
                         value:data[group_id].value+','+hook,
-                        description:data[group_id].description+', '+y18n.t('hook_'+hook)
+                        description:data[group_id].description+', '+y18n.t('hook_'+hook),
+                        size:data[group_id].size + hook_size
                     };
                 }
                 else {
                     data[group_id] = {
                         name:y18n.t('hook_'+group_id),
                         value:hook,
-                        description:(group_id==hook)?y18n.t('hook_'+hook+'_desc'):y18n.t('hook_'+hook)
+                        description:(group_id==hook)?y18n.t('hook_'+hook+'_desc'):y18n.t('hook_'+hook),
+                        size:hook_size
                     };
                 }
-            });         
+            });
             return data;
         },
-        
+
         ungroupHooks: function(system_parts,apps) {
             var data = {};
             data['apps'] = apps || [];
             data['system'] = system_parts || [];
-            
+
             if (data['system'].constructor !== Array) {
                 data['system'] = [data['system']];
             }

@@ -17,16 +17,69 @@
         });
     });
 
+    function levelToColor(level) {
+        if (level >= 3) {
+            return 'success';
+        }
+        else if (level >= 1) {
+            return 'warning';
+        }
+        else if (isNaN(level)) {
+            return 'default';
+        } else {
+            return 'danger'
+        }
+    }
+
+    function stateToColor(state) {
+        if (state === "working" || state === "official") {
+            return 'success';
+        }
+        else {
+            return 'danger';
+        }
+    }
+
+    function combineColors(stateColor, levelColor, installable) {
+        if (stateColor === "danger" || levelColor === "danger") {
+            return 'danger';
+        }
+        else if (stateColor === "warning" || levelColor === "warning" || levelColor === "default") {
+            return 'warning';
+        }
+        else
+        {
+            return 'success';
+        }
+    }
+
     // List available apps
     app.get('#/apps/install', function (c) {
-        c.api('/apps', function(data) { // http://api.yunohost.org/#!/app/app_list_get_8
-            c.api('/apps?raw', function(dataraw) { // http://api.yunohost.org/#!/app/app_list_get_8
-                var apps = [];
+        c.api('/apps', function (data) { // http://api.yunohost.org/#!/app/app_list_get_8
+            c.api('/apps?raw', function (dataraw) { // http://api.yunohost.org/#!/app/app_list_get_8
+                var apps = []
                 $.each(data['apps'], function(k, v) {
-                    // Keep only uninstalled apps, or multi-instance apps
-                    if ((!v['installed'] || dataraw[v['id']].manifest.multi_instance) && !v['id'].match(/__[0-9]{1,5}$/)) {
-                        // Check app source
-                        dataraw[v['id']]['official'] = (dataraw[v['id']]['repository'] == 'yunohost');
+                    if (dataraw[v['id']]['state'] === "validated")
+                    {
+                        dataraw[v['id']]['state'] = "official";
+                    }
+                    var state = dataraw[v['id']]['state'];
+                    var levelFormatted = parseInt(dataraw[v['id']]['level']);
+                    var isWorking = (state === 'working' || state === 'official') && levelFormatted > 0;
+                    // Keep only the first instance of each app and remove community not working apps
+                    if (!v['id'].match(/__[0-9]{1,5}$/) && (dataraw[v['id']]['repository'] === 'yunohost' || state !== 'notworking')) {
+
+                        dataraw[v['id']]['installable'] = (!v['installed'] || dataraw[v['id']].manifest.multi_instance)
+                        dataraw[v['id']]['isCommunity'] = !(dataraw[v['id']]['repository'] === 'yunohost');
+                        dataraw[v['id']]['levelFormatted'] = isNaN(levelFormatted) ? '?' : levelFormatted;
+                        dataraw[v['id']]['levelColor'] = levelToColor(levelFormatted);
+                        dataraw[v['id']]['stateColor'] = stateToColor(state);
+                        dataraw[v['id']]['installColor'] = combineColors(dataraw[v['id']]['stateColor'], dataraw[v['id']]['levelColor']);
+                        dataraw[v['id']]['displayLicense'] = (dataraw[v['id']]['manifest']['license'] !== undefined
+                                                              && dataraw[v['id']]['manifest']['license'] !== 'free');
+                        dataraw[v['id']]['updateDate'] = dataraw[v['id']]['lastUpdate'] * 1000 || 0;
+                        dataraw[v['id']]['isSafe'] = (dataraw[v['id']]['installColor'] !== 'danger');
+                        dataraw[v['id']]['isWorking'] = isWorking ? "isworking" : "notFullyWorking";
 
                         jQuery.extend(dataraw[v['id']], v);
                         apps.push(dataraw[v['id']]);
@@ -35,7 +88,45 @@
 
                 // Sort app list
                 c.arraySortById(apps);
-                c.view('app/app_list_install', {apps: apps});
+
+                // setup filtering of apps once the view is loaded
+                function  setupFilterEvents () {
+                    // Uses plugin isotope to filter apps (we could had ordering to)
+                    var cardGrid = jQuery('.grid').isotope({
+                      itemSelector: '.app-card',
+                      layoutMode: 'fitRows',
+                      transitionDuration: 200
+                    });
+
+                    filterByClassAndName = function () {
+                      var input = jQuery("#filter-app-cards").val().toLowerCase();
+                      var inputMatch = (jQuery(this).find('.app-title').text().toLowerCase().indexOf(input) > -1);
+
+                      var filterClass = jQuery("#dropdownFilter").attr("data-filter");
+                      var classMatch = (filterClass === '*') ? true : jQuery(this).hasClass(filterClass);
+                      return inputMatch && classMatch;
+                    },
+
+                    // Keep only official apps at first render
+                    cardGrid.isotope({ filter: '.isworking' });
+
+                    jQuery('.dropdownFilter').on('click', function() {
+                        // change dropdown label
+                        jQuery('#app-cards-list-filter-text').text(jQuery(this).find('.menu-item').text());
+                         // change filter attribute
+                        jQuery('#dropdownFilter').attr("data-filter", jQuery(this).attr("data-filter"));
+                        // filter !
+                        cardGrid.isotope({ filter: filterByClassAndName });
+                    });
+
+                    jQuery("#filter-app-cards").on("keyup", function() {
+                        cardGrid.isotope({ filter: filterByClassAndName });
+                    });
+                }; 
+
+                // render
+                c.view('app/app_list_install', {apps: apps}, setupFilterEvents);
+
             });
         });
     });
@@ -144,10 +235,7 @@
 
             // Multi Instance settings
             data.manifest.multi_instance = data.manifest.multi_instance ? y18n.t('yes') : y18n.t('no');
-
-            // Installation date
-            var d = new Date(data.settings.install_time * 1000);
-            data.install_time = d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+            data.install_time = new Date(data.settings.install_time * 1000);
 
             c.view('app/app_info', data);
         });
@@ -250,11 +338,12 @@
             // Default values
             args[k].type = (typeof v.type !== 'undefined') ? v.type : 'string';
             args[k].inputType = 'text';
+            args[k].isPassword = false;
+            args[k].isDisplayText = false;
             args[k].required = (typeof v.optional !== 'undefined' && v.optional == "true") ? '' : 'required';
             args[k].attributes = "";
             args[k].helpText = "";
             args[k].helpLink = "";
-
 
             // Multilingual label
             args[k].label = (typeof args[k].ask[y18n.locale] !== 'undefined') ?
@@ -368,6 +457,12 @@
             if (v.name == 'password' || args[k].type == 'password') {
                 // Change html input type
                 args[k].inputType = 'password';
+                args[k].isPassword = true;
+            }
+
+            if (args[k].type == "display_text") {
+                args[k].isDisplayText = true;
+                args[k].label = args[k].label.split("\n");
             }
 
         });
@@ -399,11 +494,42 @@
     // App installation form
     app.get('#/apps/install/:app', function (c) {
         c.api('/apps?raw', function(data) { // http://api.yunohost.org/#!/app/app_list_get_8
-            c.appInstallForm(
-                c.params['app'],
-                data[c.params['app']].manifest,
-                c.params
-            );
+            var app_name = c.params["app"];
+            var app_infos = data[app_name];
+            if (app_infos['state'] === "validated")
+            {
+                app_infos['state'] = "official";
+            }
+            var state_color = stateToColor(app_infos['state']);
+            var level_color = levelToColor(parseInt(app_infos['level']));
+            var is_safe_for_install_color = combineColors(state_color, level_color);
+
+            if ((is_safe_for_install_color === "warning") || (is_safe_for_install_color === "danger"))
+            {
+                c.confirm(
+                    y18n.t("applications"),
+                    y18n.t("confirm_install_app_"+is_safe_for_install_color),
+                    function(){
+                        c.appInstallForm(
+                            app_name,
+                            app_infos.manifest,
+                            c.params
+                        );
+                    },
+                    function(){
+                        $('div.loader').remove();
+                        c.redirect('#/apps/install');
+                    }
+                );
+            }
+            else
+            {
+                c.appInstallForm(
+                    c.params['app'],
+                    data[c.params['app']].manifest,
+                    c.params
+                );
+            }
         });
     });
 
@@ -681,7 +807,7 @@
               c.view('app/app_changelabel', data);
         });
     });
-    
+
     // Change app label
     app.post('#/apps/:app/changelabel', function (c) {
         params = {'new_label': c.params['label']};
@@ -718,7 +844,7 @@
             });
         });
     });
-    
+
     // Change app URL
     app.post('#/apps/:app/changeurl', function (c) {
         c.confirm(
@@ -736,5 +862,5 @@
                 c.redirect('#/apps/'+ c.params['app'] + '/changeurl');
             }
         );
-    });   
+    });
 })();

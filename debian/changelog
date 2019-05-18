@@ -1,3 +1,112 @@
+yunohost-admin (3.5.2) stable; urgency=low
+
+  - Release as stable !
+  - [fix] No more changelog, c.f. change in tools_update
+  - [i18n] Improve translations for Catalan, Arabic, Italian, Bengali
+
+  Thanks to all contributors (Aleks, Xaloc, BoF, silkevicious, mytechpro) <3 !
+ 
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Wed, 10 Apr 2019 02:00:00 +0000
+
+yunohost-admin (3.5.1) testing; urgency=low
+
+  - [enh] Display version inside app info (#235)
+  - [enh] Support display_text (#234)
+  - [fix] Don't use version for cache control (#233)
+  - Minor technical fixes / improvements (d264afe, 007ab86, 7322454)
+  - [i18n] Update translation for French, Occitan, Catalan, Portuguese, Chinese, Hungarian
+
+  Thanks to all contributors (Aleks, Arthur Lutz, Bram, Jibec, Kayou, Mélanie C., Quentí, ppr, Xaloc) <3 !
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Wed, 03 Apr 2019 02:30:00 +0000
+
+yunohost-admin (3.5.0) testing; urgency=low
+
+  - [enh] Remove dependency to GET /version to fetch version (#226)
+  - [enh] Add Konami code ;) (#208)
+  - [fix] Explain the user why the security.rss feed retrieval might not been working (18d6a00)
+  - [i18n] Improve Russian translation
+
+  Contributors: Alexandre Aubin, Алексей
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Wed, 13 Mar 2019 16:40:00 +0000
+
+yunohost-admin (3.4.2) stable; urgency=low
+
+  * Improve German translation
+
+  Thanks to frju365 <3 !
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Tue, 29 Jan 2019 16:45:00 +0000
+
+yunohost-admin (3.4.1) testing; urgency=low
+
+  * [fix] handle super cryptic error situation (4884bff)
+  * [enh] Add "Select all/none" buttons on webadmin backup creation and
+    restore pages (#224)
+  * [i18n] Misc orthotypograhy
+
+  Thanks to all contributors (Jean-Baptiste, Laurent Peuch, chateau) <3 !
+ 
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Thu, 17 Jan 2019 22:03:00 +0000
+
+yunohost-admin (3.4.0.1) testing; urgency=low
+
+  * [fix] Minor issue where a warning would popup when installing a level7 official app
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Fri, 28 Dec 2018 14:33:00 +0000
+
+yunohost-admin (3.4.0) testing; urgency=low
+
+  * [enh] Added option to purge user's data when removing it from the admin panel (#221)
+  * [fix] Do not fail miserably if we don't have proper json during error 500 (#220)
+  * [enh] Confirm when installing experimental or low quality apps (#218)
+  * [fix] Don't run initial checks each time home page is displayed (#217)
+  * [enh] Display date in timezone of browser (#216)
+  * [i18n] Improve Occitan, Spanish and Swedish translations
+
+  Thanks to all contributors (Aleks, P. Joelson, Quenti, chateau, gdayon, ljf) <3 !
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Thu, 20 Dec 2018 22:23:00 +0000
+
+yunohost-admin (3.3.1) stable; urgency=low
+
+  * [fix] Fix official app install list filter (follow up of #205)
+  * [i18n] Improve Occitan translation
+
+  Thanks to all contributors (Aleks, Quent-in)
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Fri, 23 Nov 2018 15:25:00 +0000
+
+yunohost-admin (3.3.0) testing; urgency=low
+
+  * [enh] Rework app install list design (#205)
+  * [enh] Add advices about password strength (#212)
+  * [i18n] Improve Frenchm Catalan, Italian, Arabic, Polish, Occitan translations
+
+  Thanks to all contributors (e-lie, Aleks, Jibec, xaloc33, silkevicious, tbille, ButterflyOfFire, Krzysztof Dmowski, Quent-in) <3 !
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Thu, 08 Nov 2018 19:25:00 +0000
+
+yunohost-admin (3.2.1) stable; urgency=low
+
+  * Fix an important issue where no feedback was given to the user during long actions such as postinstall (#211)
+  * Improve Arabic, Catalan and Occitan translations
+
+  Thanks to all contributors (ljf, Xaloc, BoF) <3 !
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Tue, 17 Sep 2018 18:25:00 +0000
+
+yunohost-admin (3.2.0) stable; urgency=low
+
+  * Improve accessibility of the webadmin (#206)
+  * Remove confusing "installed" label for multiinstance apps (#204)
+  * [i18n] Improve Occitan, Arabic, French, Italian, Turkish, Catalan and German translations
+
+  Thanks to all contributors (irina11y, Xaloc, BoF, ElodieA, Quenti) <3 !
+
+ -- Alexandre Aubin <alex.aubin@mailoo.org>  Tue, 11 Sep 2018 17:05:00 +0000
+
 yunohost-admin (3.2.0~testing1) testing; urgency=low
 
   * Web interface for operation logs (#130)
@@ -199,7 +308,7 @@ yunohost-admin (2.6.0) testing; urgency=low
 
 ## Other improvements
 
-  * [fix]�Guess API's baseurl is store is empty.
+  * [fix] Guess API's baseurl is store is empty.
   * [fix] Avoid empty whitespace for the first line of the logs display (#151)
   * [fix] Set document root permission during package install. (#156)
   * [fix] Cleanup app_list_install template (unused code since 66dbcf50).
@@ -264,7 +373,7 @@ yunohost-admin (2.4.2) stable; urgency=low
   * [enh] Display YNH version in footer. Need body padding improvments. #316
   * [enh] Allow key/value choices in manifest arguments.
 
-  [ J�rome Lebleu ]
+  [ Jérome Lebleu ]
   * [fix] Run npm/gulp at build in Debian rules
 
   [ Laurent Peuch ]
@@ -331,9 +440,9 @@ yunohost-admin (2.3.8) testing; urgency=low
 
 yunohost-admin (2.3.7) testing; urgency=low
 
-  Thanks to every contributors and translators: Jean-Baptise, Jéröme Lebleu and opi
+  Thanks to every contributors and translators: Jean-Baptise, Jérôme Lebleu and opi
 
-  [ J�Translations ]
+  [ Translations ]
   * [i18n] Translated using Weblate (French)
   * [i18n] Translated using Weblate (Dutch)
   * [i18n] Translated using Weblate (German)
@@ -390,7 +499,7 @@ yunohost-admin (2.3.5) testing; urgency=low
   * [i18n] Translated using Weblate (Italian)
   * [i18n] Translated using Weblate (Italian)
 
-  [ étienne Deparis ]
+  [ Etienne Deparis ]
   * [i18n] Translated using Weblate (French)
 
   [ Jean-Baptiste ]
@@ -463,7 +572,7 @@ yunohost-admin (2.3.5) testing; urgency=low
   * [enh] separate calls so that the makefile can error out at first error
 
   [ opi ]
-  * [fix] Revert hardcoded version introduced in 0f8350a1e3
+  * [fix] Revert hardcoded version introduced in 0f8350a1e3
 
   [ Julien Malik ]
   * [fix] fonts were forgotten along the way

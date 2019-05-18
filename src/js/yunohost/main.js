@@ -26,10 +26,6 @@
         Handlebars.registerHelper('humanTime', function(time) {
             return Math.round(time) + 's';
         });
-        Handlebars.registerHelper('timestampToDate', function(timestamp) {
-            var date = new Date(timestamp * 1000);
-            return date.toLocaleString();
-        });
         Handlebars.registerHelper('bitRate', function(bytes, time) {
             var sizes = ['b', 'Kb', 'Mb', 'Gb', 'Tb'];
             if (time === 0) return 'n/a';
@@ -153,9 +149,9 @@
             // Store url
             sam.store.set('url', window.location.hostname + '/yunohost/api');
 
-            // Get YunoHost version
             if (sam.store.get('connected')) {
-                this.api('/version', function(versions) {
+                this.api('/diagnosis', function(diagnosis) {
+                    versions = diagnosis.packages;
                     $('#yunohost-version').html(y18n.t('footer_version', [versions.yunohost.version, versions.yunohost.repo]));
                 });
             }

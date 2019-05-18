@@ -269,6 +269,9 @@ button {
 
     .content {
       .modal-body;
+      .danger {
+        color: red;
+      }
     }
 
     footer {
@@ -349,6 +352,19 @@ div.br {
     right: 0;
     z-index: 2000;
 }
+
+.with-nyancat {
+    .loader{
+        background: rgba(255, 255, 255, 0.5) url(../img/nyancat.gif) center 15% no-repeat;
+        animation: pacmanlinearmove 6s linear infinite;
+    }
+    .loader-content {
+        left: -20%;
+        right: -20%;
+    }
+}
+
+
 .loader-popup {
     margin: auto;
     height: 24px;
@@ -557,6 +573,60 @@ input[type='radio'].nice-radio {
     }
 }
 
+// only one card for small screens
+.app-card {
+	width: 100%;
+	.btn-group {
+		width: 100%;
+		.btn{
+		  margin-left: 0;
+		}
+	}
+}
+
+#app-filter-input{
+	.dropdown-menu{
+		min-width: 120px;
+		right: 0;
+		left: auto;
+	}
+	.menu-item{
+		padding: 3px 10px;
+	}
+}
+
+
+.app-title {
+    margin-top: 5px;
+}
+
+.app-card-desc {
+    height: 6rem;
+    overflow: hidden;
+}
+
+.app-card-date-maintainer {
+    text-align: right;
+    max-height: 18px;
+    margin-bottom: 3px;
+    margin-right: 7px;
+    margin-top: -5px;
+}
+
+
+.app-card .panel-body {
+    padding: 1.5rem;
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: .5rem;
+    }
+
+    .category {
+      margin-bottom: .5rem;
+    }
+}
+
 
 /** Flash messages **/
 #flashMessage {
@@ -599,6 +669,17 @@ input[type='radio'].nice-radio {
             #toggle-btn {display: block;}
         }
     }
+
+    // display 2 cards between 640 and 992px
+    .app-card {
+      width: 47.9%;
+      margin: 1%;
+    }
+
+	.grid {
+	   background: #f5f5f5;
+	   border: 1px solid #ddd;
+	}
 
     #flashMessage {
         position: fixed;
@@ -687,6 +768,15 @@ input[type='radio'].nice-radio {
             }
         }
 
+    }
+}
+
+// bootstrap breakpoint for large screen is 992px
+@media screen and (min-width: 992px) {
+    .app-card {
+      // display 3 cards by row
+      width: 31.3%;
+      margin: 1%;
     }
 }
 

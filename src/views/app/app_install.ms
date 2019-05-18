@@ -19,6 +19,8 @@
             <dd>{{id}}</dd>
             <dt>{{t 'description'}}</dt>
             <dd>{{description}}</dd>
+            <dt>{{t 'version'}}</dt>
+            <dd>{{manifest.version}}</dd>
             <dt>{{t 'multi_instance'}}</dt>
             <dd>{{manifest.multi_instance}}</dd>
         </dl>
@@ -39,13 +41,24 @@
         </div>
         {{#manifest.arguments.install}}
         <div class="form-group">
+            {{#if isDisplayText}}
+            <div class="col-sm-12">
+                {{#label}}
+                <p>{{.}}</p>
+                {{/label}}
+            </div>
+            {{else}}
             <label for="{{name}}" class="col-sm-12">{{label}}</label>
+
 
             {{#if helpText}}
             <span class="help-block help-block--help col-sm-12">{{{helpText}}}</span>
             {{/if}}
 
             <div class="col-sm-12">
+                {{#if isPassword}}
+                <p class="text-warning">{{t 'good_practices_about_admin_password'}}</p>
+                {{/if}}
 
                 {{#if choices}}
                 <select id="{{name}}" name="{{name}}" required class="form-control" {{{attributes}}}>
@@ -64,6 +77,7 @@
                 {{/if}}
 
             </div>
+            {{/if}}
         </div>
         {{/manifest.arguments.install}}
         <hr>

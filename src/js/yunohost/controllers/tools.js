@@ -49,58 +49,56 @@
     // System update & upgrade
     app.get('#/update', function (c) {
         c.api('/update', function(data) {
-            var packagesLength = data.packages.length;
-            for(var i = 0; i < packagesLength; i++) {
-                data.packages[i].delayed = false;
-                data.packages[i].changelog = data.packages[i].changelog.replace(/\n/g, '<br />');
-
-                // Check for special packages that need delayed upgrade.
-                if (["moulinette", "moulinette-yunohost", "yunohost-admin", "yunohost-config-nginx", "ssowat", "python"].indexOf(data.packages[i].name) != -1) {
-                    c.flash('warning', y18n.t('system_delayed_upgrade_warning', [data.packages[i].name]));
-                    data.packages[i].delayed = true;
-                }
-            }
             c.view('update/update', data);
         }, 'PUT');
     });
 
     // Upgrade apps or packages
     app.get('#/upgrade/:type', function (c) {
-        if (c.params['type'] !== 'apps' && c.params['type'] !== 'packages') {
-            c.flash('fail', y18n.t('unknown_argument', [c.params['type']]));
-            store.clear('slide');
-            c.redirect('#/update');
-        }
-        else {
-            c.confirm(
-                y18n.t('tools'),
-                // confirm_update_apps and confirm_update_packages
-                y18n.t('confirm_update_' + c.params['type'].toLowerCase()),
-                function(){
-                    var endurl = '';
-                    if (c.params['type'] == 'packages') {endurl = 'ignore_apps';}
-                    else if (c.params['type'] == 'apps') {endurl = 'ignore_packages';}
+        c.confirm(
+            y18n.t('tools'),
+            // confirm_update_apps and confirm_update_packages
+            y18n.t('confirm_update_' + c.params['type'].toLowerCase()),
+            function(){
+                c.api('/upgrade?'+c.params["type"],
+                      function(data) {
+                          store.clear('slide');
+                          c.redirect('#/tools/logs');
+                      },
+                      'PUT');
+            },
+            function(){
+                store.clear('slide');
+                c.redirect('#/update');
+            }
+        );
+    });
 
-                    c.api('/upgrade?'+endurl, function(data) {
-                        // 'log' is a reserved name, maybe in handlebars
-                        data.logs = data.log;
-                        c.view('upgrade/upgrade', data);
-                    }, 'PUT');
-
-                },
-                function(){
-                    store.clear('slide');
-                    c.redirect('#/update');
-                }
-            );
-        }
+    // Upgrade a specific apps
+    app.get('#/upgrade/apps/:app', function (c) {
+        c.confirm(
+            y18n.t('tools'),
+            y18n.t('confirm_update_specific_app', [c.params['app']]),
+            function(){
+                c.api('/upgrade/apps?app='+c.params['app'].toLowerCase(),
+                      function(data) {
+                          store.clear('slide');
+                          c.redirect('#/tools/logs');
+                      },
+                      'PUT');
+            },
+            function(){
+                store.clear('slide');
+                c.redirect('#/update');
+            }
+        );
     });
 
     // Display journals list
     app.get('#/tools/logs', function (c) {
-        c.api("/logs", function(categories) {
+        c.api("/logs?limit=25&with_details", function(categories) {
             data = [];
-            icons = {
+            category_icons = {
                 'operation': 'wrench',
                 'history': 'history',
                 'package': 'puzzle-piece',
@@ -109,11 +107,20 @@
                 'service': 'cog',
                 'app': 'cubes'
             }
+            success_icons = {
+                true: 'check text-success',
+                false: 'close text-danger',
+                '?': 'question text-warning'
+            }
             for (var category in categories) {
+                for (var log in categories[category])
+                {
+                    categories[category][log].success_icon = success_icons[categories[category][log].success]
+                }
                 if (categories.hasOwnProperty(category)) {
                     data.push({
                         key:category,
-                        icon:(category in icons)?icons[category]:'info-circle',
+                        icon:(category in category_icons)?category_icons[category]:'info-circle',
                         value:categories[category]
                     });
                 }
@@ -121,7 +128,7 @@
 
             c.view('tools/tools_logs', {
                 "data": data,
-	        "locale": y18n.locale
+                "locale": y18n.locale
             });
         });
     });
@@ -134,12 +141,6 @@
         
         c.api("/logs/display" + params, function(log) {
             if ('metadata' in log) {
-                if ('started_at' in log.metadata) {
-                    log.metadata.started_at = Date.parse(log.metadata.started_at)
-                }
-                if ('ended_at' in log.metadata) {
-                    log.metadata.ended_at = Date.parse(log.metadata.ended_at)
-                }
                 if (!'env' in log.metadata && 'args' in log.metadata) {
                     log.metadata.env = log.metadata.args
                 }
@@ -152,26 +153,6 @@
         });
     });
     
-    // Upgrade a specific apps
-    app.get('#/upgrade/apps/:app', function (c) {
-        c.confirm(
-            y18n.t('tools'),
-            y18n.t('confirm_update_specific_app', [c.params['app']]),
-            function(){
-                c.api('/upgrade/apps?app='+c.params['app'].toLowerCase(),
-                        function(data) {
-                            // 'log' is a reserved name, maybe in handlebars
-                            data.logs = data.log;
-                            c.view('upgrade/upgrade', data);
-                        }, 'PUT');
-            },
-            function(){
-                store.clear('slide');
-                c.redirect('#/update');
-            }
-        );
-    });
-
 
     // Download SSL Certificate Authority
     app.get('#/tools/ca', function (c) {
@@ -229,8 +210,8 @@
 
     // Packages version
     app.get('#/tools/versions', function (c) {
-        c.api('/version', function(versions) {
-            c.view('tools/tools_versions', {'versions' : versions});
+        c.api('/diagnosis', function(diagnosis) {
+            c.view('tools/tools_versions', {'versions' : diagnosis.packages });
         });
     });
 

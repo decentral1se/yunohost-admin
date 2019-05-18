@@ -14,7 +14,7 @@
     <div class="panel-body">
         <dl class="dl-horizontal">
             <dt>{{t 'id'}}</dt><dd>{{ name }}</dd>
-            <dt>{{t 'created_at'}}</dt><dd>{{ created_at }}</dd>
+            <dt>{{t 'created_at'}}</dt><dd>{{formatTime created_at day="numeric" month="long" year="numeric" hour="numeric" minute="numeric"}}</dd>
             <dt>{{t 'size'}}</dt><dd>{{ humanSize size}}</dd>
             <dt>{{t 'path'}}</dt><dd>{{ path }}</dd>
         </dl>
@@ -25,7 +25,14 @@
 <form action="#/backup/{{storage.id}}/{{name}}/restore" method="POST" class="form-horizontal">
 <div class="panel panel-default">
     <div class="panel-heading">
-        <h2 class="panel-title"><span class="fa-fw fa-archive"></span> {{t 'backup_content'}}</h2>
+        <h2 class="panel-title">
+          <span class="fa-fw fa-archive"></span>
+          {{t 'backup_content'}}
+          <span class="select_all-none pull-right">
+            <input type="button" role="select_all" class="btn btn-default slide back select_all" value="{{t 'select_all'}}" />
+            <input type="button" role="select_none" class="btn btn-default slide back select_none" value="{{t 'select_none'}}" />
+          </span>
+        </h2>
     </div>
     {{#if items}}
     <div class="list-group">
@@ -33,7 +40,11 @@
         <div class="list-group-item">
             <input type="checkbox" id="{{@key}}" name="system_parts" value="{{value}}" checked class="nice-checkbox">
             <label for="{{@key}}" class="pull-right"><span class="sr-only">{{t 'check'}}</span></label>
+            {{#if size}}
+            <h2 class="list-group-item-heading">{{name}} <small>({{ humanSize size }})</small></h2>
+            {{else}}
             <h2 class="list-group-item-heading">{{name}}</h2>
+            {{/if}}
             <p class="list-group-item-text">{{description}}</p>
         </div>
         {{/each}}
@@ -41,7 +52,9 @@
         <div class="list-group-item">
             <input type="checkbox" id="{{@key}}" name="apps" value="{{@key}}" checked class="nice-checkbox">
             <label for="{{@key}}" class="pull-right"><span class="sr-only">{{t 'check'}}</span></label>
-            <h2 class="list-group-item-heading">{{name}} <small>{{@key}}</small></h2>
+            <h2 class="list-group-item-heading">{{name}} <small>{{@key}} ({{ humanSize size }})</small></h2>
+            <p class="list-group-item-text">{{description}}</p>
+            <p class="list-group-item-text">{{t 'version'}} {{version}}</p>
         </div>
         {{/each}}
         <div class="list-group-item clearfix">
